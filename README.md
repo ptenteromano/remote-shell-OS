@@ -16,9 +16,8 @@
 
 ### How to run
 1. Clone the repo
-2. Run the following commands in the directory to compile
-  * `g++ server.cpp -o server`
-  * `g++ client.cpp -o client`
+2. Run the following command in the directory to compile
+  * `make all` - the Makefile will generate a `server` and `client` executable
 3. Open two separate terminals and run `server` in the first open
 4. Once the server is running, run `client` in the other Once
 5. Play around and enjoy!
