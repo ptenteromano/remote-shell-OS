@@ -1,5 +1,6 @@
 # simple Makefile to generate two programs
 # `make all` to compile and get executables
+# for remote shell 
 
 all: server client
 

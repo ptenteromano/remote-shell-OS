@@ -6,6 +6,8 @@
  * Remote Shell 
  * 
  * Server file
+ * 
+ * Run with 'make' or 'make all' 
  */
 
 #include <stdio.h>
@@ -16,12 +18,16 @@
 #include <string>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 // port number can be anything ( > 3000 usually)
 #define PORT 5001;
 
 // fork, exec, pipe function with cmd argument
 std::string exec(const char*);
+
+// ms function
+float getTimeInMs(timeval, timeval);
 
 int main(int argc, char *argv[]) {
 
@@ -56,8 +62,12 @@ int main(int argc, char *argv[]) {
 
     // listen on the bound socket, with up to 5 connections (non-functional at the moment)
     listen(serverSock, CONNECTIONS);
-    printf("Server Booted Up!\n");
+    printf("Server Booted Up!\n\n");
     
+    timeval sessionStart, sessionEnd, recStart, recEnd;
+    float sessTime, recTime, sessThroughput, recThroughput;
+    int bytesMessage = 0, bytesSession = 0;
+
     // sit and listen - accept connections  
     do {
         bool startUp = true; // initial connection bool
@@ -72,8 +82,13 @@ int main(int argc, char *argv[]) {
                 exit(1);
             }
             
+            // reset session data
+            bytesSession = 0;
+            gettimeofday(&sessionStart, NULL);
+
             // loop through receiving data from client
             do {
+                bytesMessage = 0;
                 // reset server incoming memory to buffer 
                 memset(&buffer, 0, sizeof(buffer)); 
 
@@ -84,8 +99,13 @@ int main(int argc, char *argv[]) {
                     printf("Ending connection... \n");
                     break;
                 }
-                else 
+                else {
+                    // mark start time for connection time 
+                    gettimeofday(&recStart, NULL);
                     printf("New Message from client: %s\n", buffer);    
+                    // store bytes
+                    bytesMessage += rval;
+                }
 
                 // if input is 'exit', send client close info and break out of loop
                 if (strcmp(buffer, "exit") == 0) {
@@ -110,19 +130,39 @@ int main(int argc, char *argv[]) {
                 }
 
                 // send the output of the exec call and error check
-                if (send(newConnSock, (const void *) output.c_str(), output.length(), 0) < 0) 
+                if ((rval = send(newConnSock, (const void *) output.c_str(), output.length(), 0)) < 0) 
                     perror("Exec send failed");
-                else 
-                    printf("Message Sent!\n");
+                else {
+                    // store send bytes
+                    bytesMessage += rval;
+                    printf("Response Sent to Client!\n\n");
+                }
+                bytesSession += bytesMessage;
 
-                // server-side output for testing
-                // printf("%s", output.c_str());
+                // clock end of connection time, calculate and print to server console
+                gettimeofday(&recEnd, NULL);
+                recTime = (float) (recEnd.tv_usec - recStart.tv_usec) / (float) 1000;
+                recThroughput = (float) bytesSession / recTime;
+        
+                printf("Message Latency: %.2f ms\n", recTime);
+                printf("Bytes Transfered: %d B\n", bytesMessage);
+                printf("Throughput of last connection: %.2f Bytes/sec \n\n", recThroughput);
+
             } while(1);
 
-            // close client socket but continue listening for new connections
+            // close client socket, print session time, calc session throughput
             close(newConnSock);
+            gettimeofday(&sessionEnd, NULL);
+            sessTime = (float) (sessionEnd.tv_usec - sessionStart.tv_usec) / (float) 1000;
+            sessThroughput = (float) bytesSession / sessTime;
+        
+            printf("Session Time: %.2f ms\n", sessTime);
+            printf("Total Session Bytes Transfered: %d B\n", bytesSession);
+            printf("Session Throughput: %.2f Bytes/Sec \n\n", sessThroughput);
+
             printf("Socket closed, listening for more connections... \n");
         }   
+    // continue listening for new connections
     } while(1);
 
     return 0;
@@ -150,4 +190,8 @@ std::string exec(const char* cmd) {
     pclose(pipe);
     
     return result;
+}
+
+float getTimeInMs(timeval end, timeval start) {
+    return (float) ((end.tv_sec*1e6 + end.tv_usec) - (start.tv_sec*1e6 + start.tv_usec) / 1000);
 }
