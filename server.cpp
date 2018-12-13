@@ -26,9 +26,6 @@
 // fork, exec, pipe function with cmd argument
 std::string exec(const char*);
 
-// ms function
-float getTimeInMs(timeval, timeval);
-
 int main(int argc, char *argv[]) {
 
     // inital send data
@@ -190,8 +187,4 @@ std::string exec(const char* cmd) {
     pclose(pipe);
     
     return result;
-}
-
-float getTimeInMs(timeval end, timeval start) {
-    return (float) ((end.tv_sec*1e6 + end.tv_usec) - (start.tv_sec*1e6 + start.tv_usec) / 1000);
 }
