@@ -1,13 +1,7 @@
 /* Philip Tenteromano
- * 
- * 12/13/2018
- * Operating Systems
- * Final Project
- * Remote Shell 
- * 
  * Server file
- * 
- * Run with 'make' or 'make all' 
+ *
+ * Compile with 'make server' or 'make all'
  */
 
 #include <stdio.h>
@@ -45,12 +39,12 @@ int main(int argc, char *argv[]) {
         perror("Socket creation failed");
         exit(1);
     }
-    
+
     // intialize server information, set to any form of internet / localhost and port
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = PORT; 
-    
+    server.sin_port = PORT;
+
     // bind the server socket to localhost server (and also our port 5001)
     if (bind(serverSock, (sockaddr *)&server, sizeof(server))) {
         perror("Bind Failed");
@@ -60,12 +54,12 @@ int main(int argc, char *argv[]) {
     // listen on the bound socket, with up to 5 connections (non-functional at the moment)
     listen(serverSock, CONNECTIONS);
     printf("Server Booted Up!\n\n");
-    
+
     timeval sessionStart, sessionEnd, recStart, recEnd;
     float sessTime, recTime, sessThroughput, recThroughput;
     int bytesMessage = 0, bytesSession = 0;
 
-    // sit and listen - accept connections  
+    // sit and listen - accept connections
     do {
         bool startUp = true; // initial connection bool
         newConnSock = accept(serverSock, (sockaddr *) 0, 0);
@@ -78,7 +72,7 @@ int main(int argc, char *argv[]) {
                 close(serverSock);
                 exit(1);
             }
-            
+
             // reset session data
             bytesSession = 0;
             gettimeofday(&sessionStart, NULL);
@@ -86,8 +80,8 @@ int main(int argc, char *argv[]) {
             // loop through receiving data from client
             do {
                 bytesMessage = 0;
-                // reset server incoming memory to buffer 
-                memset(&buffer, 0, sizeof(buffer)); 
+                // reset server incoming memory to buffer
+                memset(&buffer, 0, sizeof(buffer));
 
                 // receive and error check
                 if ((rval = recv(newConnSock, &buffer, sizeof(buffer), 0)) < 0)
@@ -97,9 +91,9 @@ int main(int argc, char *argv[]) {
                     break;
                 }
                 else {
-                    // mark start time for connection time 
+                    // mark start time for connection time
                     gettimeofday(&recStart, NULL);
-                    printf("New Message from client: %s\n", buffer);    
+                    printf("New Message from client: %s\n", buffer);
                     // store bytes
                     bytesMessage += rval;
                 }
@@ -109,25 +103,25 @@ int main(int argc, char *argv[]) {
                     send(newConnSock, buffer, sizeof(buffer), 0);
                     break;
                 }
-                
+
                 // on first run, don't attempt to exec anything
                 if (startUp) {
                     startUp = false;
                     continue;
                 }
-                
+
                 // call the forking, exec, and piping function
                 std::string output = "";
                 try {
                     output = exec(buffer);
-                } 
+                }
                 catch(...) {
                     output = "Not Found\n";
                     perror("Exec failed");
                 }
 
                 // send the output of the exec call and error check
-                if ((rval = send(newConnSock, (const void *) output.c_str(), output.length(), 0)) < 0) 
+                if ((rval = send(newConnSock, (const void *) output.c_str(), output.length(), 0)) < 0)
                     perror("Exec send failed");
                 else {
                     // store send bytes
@@ -140,7 +134,7 @@ int main(int argc, char *argv[]) {
                 gettimeofday(&recEnd, NULL);
                 recTime = (float) (recEnd.tv_usec - recStart.tv_usec) / (float) 1000;
                 recThroughput = (float) bytesSession / recTime;
-        
+
                 printf("Message Latency: %.2f ms\n", recTime);
                 printf("Bytes Transfered: %d B\n", bytesMessage);
                 printf("Throughput of last connection: %.2f Bytes/sec \n\n", recThroughput);
@@ -152,13 +146,13 @@ int main(int argc, char *argv[]) {
             gettimeofday(&sessionEnd, NULL);
             sessTime = (float) (sessionEnd.tv_usec - sessionStart.tv_usec) / (float) 1000;
             sessThroughput = (float) bytesSession / sessTime;
-        
+
             printf("Session Time: %.2f ms\n", sessTime);
             printf("Total Session Bytes Transfered: %d B\n", bytesSession);
             printf("Session Throughput: %.2f Bytes/Sec \n\n", sessThroughput);
 
             printf("Socket closed, listening for more connections... \n");
-        }   
+        }
     // continue listening for new connections
     } while(1);
 
@@ -177,7 +171,7 @@ std::string exec(const char* cmd) {
             if (fgets(buffer, 1024, pipe) != NULL)
                 result += buffer;
         }
-    } 
+    }
     catch (...) {
         pclose(pipe);
         result = "Not Found";
@@ -185,6 +179,6 @@ std::string exec(const char* cmd) {
     }
 
     pclose(pipe);
-    
+
     return result;
 }

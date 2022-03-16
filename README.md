@@ -1,5 +1,12 @@
 # Server-Client C++
 
+### How to run
+1. Clone the repo
+2. Run the following command in the directory to compile
+   * `make all` - the Makefile will generate a `server` and `client` executable
+3. Open two separate terminals and run `server` in the first open
+4. Once the server is running, run `client` in the other Once
+5. Play around and enjoy!
 ## Features:
 1. A remote shell used for simulate core concepts of OS system calls
 2. server.cpp runs a process which listens on `localhost:5001`
@@ -12,12 +19,3 @@
 9. The exec System call is looking to execute a bash command and store it in variable
 10. Finally, the server will send back the contents of the output to the client
 11. The client renders the output, and continues to sit on the connection
-
-
-### How to run
-1. Clone the repo
-2. Run the following command in the directory to compile
-   * `make all` - the Makefile will generate a `server` and `client` executable
-3. Open two separate terminals and run `server` in the first open
-4. Once the server is running, run `client` in the other Once
-5. Play around and enjoy!

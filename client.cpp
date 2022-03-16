@@ -1,11 +1,9 @@
 /* Philip Tenteromano
  *
- * 12/13/2018
- * Operating Systems
- * Final Project
- * Remote Shell
- * 
- * Client file
+ * Client File
+ * Server must be running before this file is run, or connection will fail
+ *
+ * Compile with 'make server' or 'make all'
  */
 
 #include <stdio.h>
@@ -27,7 +25,7 @@ int main(int argc, char *argv[]) {
     // declare send data, socket, server info, localhost, and buffer
     char* data = "Client Connected!";
 	int clientSock;
-	sockaddr_in server; 
+	sockaddr_in server;
 	hostent *hp;
 	char buffer[1024];
     int rval;
@@ -60,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
 
     // set an input string, init to welcome message
-    std::string line = data;            
+    std::string line = data;
     do {
         // send data over to server, convert input 'line' to c-style string
         if(send(clientSock, line.c_str(), strlen(line.c_str()), 0) < 0) {
@@ -77,22 +75,22 @@ int main(int argc, char *argv[]) {
         }
 
         // receive and error check
-        if ((rval = recv(clientSock, &buffer, sizeof(buffer), 0)) < 0) 
+        if ((rval = recv(clientSock, &buffer, sizeof(buffer), 0)) < 0)
             perror("Reading stream message error");
         else if (rval == 0) {
             printf("No Response, continuing... \n");
         }
-        else 
-            printf("New Message from Server: \n\n%s", buffer); 
+        else
+            printf("New Message from Server: \n\n%s", buffer);
 
         printf("\nMessage complete\n");
-        
+
         // interactive client input (continuously input and send data)
         getline(std::cin, line);
         // reset buffer
-        memset(&buffer, 0, sizeof(buffer)); 
+        memset(&buffer, 0, sizeof(buffer));
         // store line into buffer
-        strcpy(buffer, line.c_str());       
+        strcpy(buffer, line.c_str());
 
     } while(1);
 
